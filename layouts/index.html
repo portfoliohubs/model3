@@ -1039,40 +1039,15 @@ transform: translate(30%, 30%) scale(1.5);
             height: auto;
             object-fit: contain;
             border-radius: var(--radius);
-            transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
             position: relative;
             z-index: 2;
             filter: drop-shadow(0 10px 20px rgba(0,0,0,0.1));
         }
 
         .case-card:hover .case-image {
-            transform: scale(1.12) rotate(-3deg);
+            transform: scale(1.05);
             filter: drop-shadow(0 20px 40px rgba(0,0,0,0.2));
-        }
-
-        /* Magnifying glass with pulse */
-        .case-card .magnify-icon {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0);
-            font-size: 3.5rem;
-            opacity: 0;
-            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-            z-index: 5;
-            filter: drop-shadow(0 4px 15px rgba(0,0,0,0.3));
-            pointer-events: none;
-        }
-
-        .case-card:hover .magnify-icon {
-            transform: translate(-50%, -50%) scale(1);
-            opacity: 0.95;
-            animation: magnifyPulse 1s ease-in-out infinite;
-        }
-
-        @keyframes magnifyPulse {
-            0%, 100% { transform: translate(-50%, -50%) scale(1); }
-            50% { transform: translate(-50%, -50%) scale(1.15); }
         }
 
         .case-content {
@@ -1454,8 +1429,91 @@ transform: translate(30%, 30%) scale(1.5);
                 transform: none;
             }
 
+            /* Mobile Cases Section - Simplified Animations */
+            .orb,
+            .cases-section-bg {
+                display: none;
+            }
+
+            .case-category {
+                margin-bottom: 3rem;
+            }
+
+            .case-category-title {
+                font-size: 1.5rem;
+                padding: 0.5rem 1rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .case-category-title::after,
+            .case-category-title::before {
+                animation: none;
+            }
+
+            .case-card {
+                border-radius: 20px;
+                animation: mobileCardSlide 0.5s ease forwards;
+            }
+
+            @keyframes mobileCardSlide {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .case-card:hover {
+                transform: none;
+            }
+
+            .case-card::before,
+            .case-card::after {
+                display: none;
+            }
+
+            .case-image-wrapper {
+                min-height: 180px;
+                padding: 1rem;
+            }
+
+            .case-image-wrapper::before,
+            .case-image-wrapper::after,
+            .case-image-wrapper .spotlight {
+                display: none;
+            }
+
+            .case-image {
+                max-height: 250px;
+            }
+
+            .case-card:hover .case-image {
+                transform: scale(1.02);
+            }
+
+            .case-content {
+                padding: 1.25rem;
+            }
+
+            .case-content::before {
+                transform: scaleX(1);
+                animation: none;
+            }
+
+            .case-title {
+                font-size: 1.1rem;
+            }
+
+            .case-card:hover .case-title {
+                transform: none;
+            }
+
             .cases-grid {
                 grid-template-columns: 1fr;
+                gap: 1rem;
             }
 
             .contact-container {
@@ -1607,10 +1665,8 @@ transform: translate(30%, 30%) scale(1.5);
                 <div class="cases-grid">
                     {{ range .cases }}
                     <div class="case-card">
-                        <span class="case-badge">View Case</span>
                         <div class="case-image-wrapper">
                             <img src="{{ .photo }}" alt="{{ .alt }}" class="case-image">
-                            <span class="magnify-icon">🔍</span>
                         </div>
                         <div class="case-content">
                             <h4 class="case-title">{{ .description }}</h4>
@@ -1755,128 +1811,133 @@ transform: translate(30%, 30%) scale(1.5);
         caseCategories.forEach(cat => categoryObserver.observe(cat));
         caseCards.forEach(card => cardObserver.observe(card));
 
-        // Spotlight effect following cursor
-        caseCards.forEach(card => {
-            const wrapper = card.querySelector('.case-image-wrapper');
-            const spotlight = document.createElement('div');
-            spotlight.style.cssText = `
-                position: absolute;
-                width: 300px;
-                height: 300px;
-                background: radial-gradient(circle, rgba(201, 169, 98, 0.25) 0%, transparent 70%);
-                border-radius: 50%;
-                pointer-events: none;
-                opacity: 0;
-                transition: opacity 0.3s ease;
-                transform: translate(-50%, -50%);
-                z-index: 5;
-            `;
-            wrapper.appendChild(spotlight);
-
-            wrapper.addEventListener('mousemove', (e) => {
-                const rect = wrapper.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                spotlight.style.left = x + 'px';
-                spotlight.style.top = y + 'px';
-                spotlight.style.opacity = '1';
-            });
-
-            wrapper.addEventListener('mouseleave', () => {
-                spotlight.style.opacity = '0';
-            });
-        });
-
-        // 3D Magnetic Tilt with Elastic Physics
-        caseCards.forEach(card => {
-            let rafId = null;
-            let currentRotateX = 0;
-            let currentRotateY = 0;
-            let targetRotateX = 0;
-            let targetRotateY = 0;
-
-            const lerp = (start, end, factor) => start + (end - start) * factor;
-
-            const animate = () => {
-                currentRotateX = lerp(currentRotateX, targetRotateX, 0.1);
-                currentRotateY = lerp(currentRotateY, targetRotateY, 0.1);
-                
-                if (Math.abs(targetRotateX - currentRotateX) > 0.01 || 
-                    Math.abs(targetRotateY - currentRotateY) > 0.01) {
-                    card.style.transform = `perspective(2000px) rotateX(${currentRotateX}deg) rotateY(${currentRotateY}deg) translateZ(20px)`;
-                    rafId = requestAnimationFrame(animate);
-                }
-            };
-
-            card.addEventListener('mousemove', (e) => {
-                const rect = card.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                const centerX = rect.width / 2;
-                const centerY = rect.height / 2;
-                
-                targetRotateX = ((y - centerY) / centerY) * -15;
-                targetRotateY = ((x - centerX) / centerX) * 15;
-                
-                if (!rafId) animate();
-            });
-
-            card.addEventListener('mouseleave', () => {
-                targetRotateX = 0;
-                targetRotateY = 0;
-                animate();
-                setTimeout(() => {
-                    card.style.transform = '';
-                    rafId = null;
-                }, 300);
-            });
-        });
-
-        // Electric Particle Burst on Hover
-        caseCards.forEach(card => {
-            const createParticle = (x, y) => {
-                const particle = document.createElement('div');
-                particle.className = 'particle-burst';
-                const angle = Math.random() * Math.PI * 2;
-                const velocity = Math.random() * 100 + 50;
-                const tx = Math.cos(angle) * velocity;
-                const ty = Math.sin(angle) * velocity;
-                
-                particle.style.cssText = `
+        // Only enable complex mouse effects on non-touch devices
+        const isTouchDevice = window.matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
+        
+        if (!isTouchDevice) {
+            // Spotlight effect following cursor
+            caseCards.forEach(card => {
+                const wrapper = card.querySelector('.case-image-wrapper');
+                const spotlight = document.createElement('div');
+                spotlight.style.cssText = `
                     position: absolute;
-                    left: ${x}px;
-                    top: ${y}px;
-                    width: 6px;
-                    height: 6px;
-                    background: var(--accent);
+                    width: 300px;
+                    height: 300px;
+                    background: radial-gradient(circle, rgba(201, 169, 98, 0.25) 0%, transparent 70%);
                     border-radius: 50%;
                     pointer-events: none;
-                    z-index: 100;
-                    box-shadow: 0 0 10px var(--accent);
+                    opacity: 0;
+                    transition: opacity 0.3s ease;
+                    transform: translate(-50%, -50%);
+                    z-index: 5;
                 `;
-                particle.style.setProperty('--tx', tx + 'px');
-                particle.style.setProperty('--ty', ty + 'px');
-                
-                card.appendChild(particle);
-                
-                particle.animate([
-                    { transform: 'translate(0, 0) scale(1)', opacity: 1 },
-                    { transform: `translate(${tx}px, ${ty}px) scale(0)`, opacity: 0 }
-                ], {
-                    duration: 800,
-                    easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
-                }).onfinish = () => particle.remove();
-            };
+                wrapper.appendChild(spotlight);
 
-            card.addEventListener('mouseenter', (e) => {
-                const rect = card.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                for (let i = 0; i < 12; i++) {
-                    setTimeout(() => createParticle(x, y), i * 30);
-                }
+                wrapper.addEventListener('mousemove', (e) => {
+                    const rect = wrapper.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    spotlight.style.left = x + 'px';
+                    spotlight.style.top = y + 'px';
+                    spotlight.style.opacity = '1';
+                });
+
+                wrapper.addEventListener('mouseleave', () => {
+                    spotlight.style.opacity = '0';
+                });
             });
-        });
+
+            // 3D Magnetic Tilt with Elastic Physics
+            caseCards.forEach(card => {
+                let rafId = null;
+                let currentRotateX = 0;
+                let currentRotateY = 0;
+                let targetRotateX = 0;
+                let targetRotateY = 0;
+
+                const lerp = (start, end, factor) => start + (end - start) * factor;
+
+                const animate = () => {
+                    currentRotateX = lerp(currentRotateX, targetRotateX, 0.1);
+                    currentRotateY = lerp(currentRotateY, targetRotateY, 0.1);
+                    
+                    if (Math.abs(targetRotateX - currentRotateX) > 0.01 || 
+                        Math.abs(targetRotateY - currentRotateY) > 0.01) {
+                        card.style.transform = `perspective(2000px) rotateX(${currentRotateX}deg) rotateY(${currentRotateY}deg) translateZ(20px)`;
+                        rafId = requestAnimationFrame(animate);
+                    }
+                };
+
+                card.addEventListener('mousemove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+                    
+                    targetRotateX = ((y - centerY) / centerY) * -15;
+                    targetRotateY = ((x - centerX) / centerX) * 15;
+                    
+                    if (!rafId) animate();
+                });
+
+                card.addEventListener('mouseleave', () => {
+                    targetRotateX = 0;
+                    targetRotateY = 0;
+                    animate();
+                    setTimeout(() => {
+                        card.style.transform = '';
+                        rafId = null;
+                    }, 300);
+                });
+            });
+
+            // Electric Particle Burst on Hover
+            caseCards.forEach(card => {
+                const createParticle = (x, y) => {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle-burst';
+                    const angle = Math.random() * Math.PI * 2;
+                    const velocity = Math.random() * 100 + 50;
+                    const tx = Math.cos(angle) * velocity;
+                    const ty = Math.sin(angle) * velocity;
+                    
+                    particle.style.cssText = `
+                        position: absolute;
+                        left: ${x}px;
+                        top: ${y}px;
+                        width: 6px;
+                        height: 6px;
+                        background: var(--accent);
+                        border-radius: 50%;
+                        pointer-events: none;
+                        z-index: 100;
+                        box-shadow: 0 0 10px var(--accent);
+                    `;
+                    particle.style.setProperty('--tx', tx + 'px');
+                    particle.style.setProperty('--ty', ty + 'px');
+                    
+                    card.appendChild(particle);
+                    
+                    particle.animate([
+                        { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+                        { transform: `translate(${tx}px, ${ty}px) scale(0)`, opacity: 0 }
+                    ], {
+                        duration: 800,
+                        easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                    }).onfinish = () => particle.remove();
+                };
+
+                card.addEventListener('mouseenter', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    for (let i = 0; i < 12; i++) {
+                        setTimeout(() => createParticle(x, y), i * 30);
+                    }
+                });
+            });
+        }
 
         // Click Ripple Effect
         caseCards.forEach(card => {
